@@ -51,22 +51,10 @@ class Configs(Base):
 
     PRUNING_TOLERANCE=10
     PRED_THRESHOLD= 0.5
-    def __init__(self,inference_files=None,inference_text=None,use_numpy=False):
+    def __init__(self,is_inference=False):
         self.device = "cuda"
 
         self.model = TimmUnet_v2m(encoder="tf_efficientnetv2_m_in21k", in_chans=1, num_class=1, pretrained=True)
-
-        train_albums = [
-            A.PadIfNeeded(min_height=self.CROP_SIZE,min_width=self.CROP_SIZE,value=80,mask_value=0,border_mode=cv2.BORDER_CONSTANT),
-            A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.5),
-            A.GaussianBlur(blur_limit=(3, 5), p=1),
-            A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.5, rotate_limit=90,value=80,mask_value=0,border_mode=cv2.BORDER_CONSTANT,p=1),
-            A.RandomCrop(self.CROP_SIZE,self.CROP_SIZE,always_apply=True),
-            MaskBinarize(),
-            FilterSmallComponents(),
-            Normalize(),
-        ]
-        self.train_transform = A.Compose(train_albums)
 
         test_albums = [
             A.PadIfNeeded(min_height=self.CROP_SIZE,min_width=self.CROP_SIZE,value=80,mask_value=0,border_mode=cv2.BORDER_CONSTANT),
@@ -74,7 +62,22 @@ class Configs(Base):
             Normalize(),
         ]
         self.test_transform = A.Compose(test_albums)
+        self.inference_collator = LargeImageInferenceCollator(self.CROP_SIZE,strides=7*self.CROP_SIZE//8)
 
+        if is_inference:
+            return
+        
+        train_albums = [
+            A.PadIfNeeded(min_height=self.CROP_SIZE,min_width=self.CROP_SIZE,value=80,mask_value=0,border_mode=cv2.BORDER_CONSTANT),
+            A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.5),
+            A.GaussianBlur(blur_limit=(3, 5), p=0.25),
+            A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.5, rotate_limit=90,value=80,mask_value=0,border_mode=cv2.BORDER_CONSTANT,p=0.5),
+            A.RandomCrop(self.CROP_SIZE,self.CROP_SIZE,always_apply=True),
+            MaskBinarize(),
+            FilterSmallComponents(),
+            Normalize(),
+        ]
+        self.train_transform = A.Compose(train_albums)
         self.train_dataset = Slices3DDataset(self.TRAIN_DATA_PATHS,transforms=self.train_transform)
         self.valid_dataset = Slices3DDataset(self.VALID_DATA_PATHS,transforms=self.test_transform)
         self.valid_dataset.slices = [self.valid_dataset.slices[x] for x in range(0,len(self.valid_dataset.slices),len(self.valid_dataset.slices)//500)]
@@ -83,5 +86,4 @@ class Configs(Base):
         self.steps_per_epoch = len(self.train_dataset)//(self.SAMPLES_PER_GPU*self.N_GPU)+1
         self.VALIDATION_FREQUENCY  = self.VALIDATION_FREQUENCY * self.steps_per_epoch
         self.scheduler = torch.optim.lr_scheduler.OneCycleLR(self.optimizer,max_lr=self.LR,steps_per_epoch=self.steps_per_epoch,epochs=self.EPOCHS,pct_start=0.1)
-        self.inference_collator = LargeImageInferenceCollator(self.CROP_SIZE,strides=7*self.CROP_SIZE//8)
         self.criterion = torch.nn.BCEWithLogitsLoss()
