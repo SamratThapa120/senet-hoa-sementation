@@ -54,7 +54,7 @@ class Configs(Base):
     def __init__(self,is_inference=False):
         self.device = "cuda"
 
-        self.model = TimmUnet_v2m(encoder="tf_efficientnetv2_m_in21k", in_chans=1, num_class=1, pretrained=True)
+        self.model = TimmUnet_v2m(encoder="tf_efficientnetv2_m_in21k", in_chans=1, num_class=1, pretrained=not is_inference)
 
         test_albums = [
             A.PadIfNeeded(min_height=self.CROP_SIZE,min_width=self.CROP_SIZE,value=80,mask_value=0,border_mode=cv2.BORDER_CONSTANT),
