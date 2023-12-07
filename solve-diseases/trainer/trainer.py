@@ -95,10 +95,10 @@ class Trainer:
                     continue_training = self.continue_training(tolerance=tolerance)
 
         avg_loss = total_loss / num_batches                
-        all_losses = self.metrics.get_metric_all("training_loss")
-        all_losses.append(10000)
-        if avg_loss<=min(all_losses):
-            self.validate(self.current_step)
+        # all_losses = self.metrics.get_metric_all("training_loss")
+        # all_losses.append(10000)
+        # if avg_loss<=min(all_losses):
+        #     self.validate(self.current_step)
         self.metrics(self.current_step,"training_loss",avg_loss)
         self.logger.info(f"###Iter: {self.current_step}  ::  {self.metrics.get_metrics_by_epoch(self.current_step)}")
         return continue_training
