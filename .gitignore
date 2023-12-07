@@ -6,5 +6,3 @@ solve-diseases/workdir
 *.ipynb
 !solve-diseases/notebooks/EDA.ipynb
 !solve-diseases/notebooks/post_training_validation.ipynb
-solve-diseases/configs
-!solve-diseases/configs/baseline_effnetb7_3planes_v0.py
