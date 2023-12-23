@@ -6,6 +6,7 @@ from senet_hoa.model.unet import TimmUnet_v2m
 from senet_hoa.dataset.segment_3d_dataset import Slices3DDataset,LargeImageInferenceCollator
 import albumentations as A
 from senet_hoa.dataset.transforms import MaskBinarize,FilterSmallComponents,Normalize
+from senet_hoa.losses.losses import DiceLoss
 import cv2
 
 class Configs(Base):
@@ -38,7 +39,7 @@ class Configs(Base):
     NUM_WORKERS_VAL=6
     DISTRIBUTED=True
 
-    LR=0.0005
+    LR=0.001
 
     EPOCHS=50
     MIN_CONFIGS=2
@@ -50,7 +51,7 @@ class Configs(Base):
 
     PRUNING_TOLERANCE=10
     PRED_THRESHOLD= 0.5
-    def __init__(self,is_inference=False,sample_valid=True):
+    def __init__(self,is_inference=False):
         self.device = "cuda"
 
         self.model = TimmUnet_v2m(encoder="tf_efficientnetv2_m_in21k", in_chans=1, num_class=1, pretrained=not is_inference)
@@ -77,11 +78,10 @@ class Configs(Base):
         self.train_transform = A.Compose(train_albums)
         self.train_dataset = Slices3DDataset(self.TRAIN_DATA_PATHS,transforms=self.train_transform)
         self.valid_dataset = Slices3DDataset(self.VALID_DATA_PATHS,transforms=self.test_transform)
-        if sample_valid:
-            self.valid_dataset.slices = [self.valid_dataset.slices[x] for x in range(0,len(self.valid_dataset.slices),len(self.valid_dataset.slices)//500)]
+        self.valid_dataset.slices = [self.valid_dataset.slices[x] for x in range(0,len(self.valid_dataset.slices),len(self.valid_dataset.slices)//500)]
         print(f"length of train: {len(self.train_dataset)}, length of valid: {len(self.valid_dataset)}")
         self.optimizer = torch.optim.Adam(self.model.parameters(),lr=self.LR)
         self.steps_per_epoch = len(self.train_dataset)//(self.SAMPLES_PER_GPU*self.N_GPU)+1
         self.VALIDATION_FREQUENCY  = self.VALIDATION_FREQUENCY * self.steps_per_epoch
         self.scheduler = torch.optim.lr_scheduler.OneCycleLR(self.optimizer,max_lr=self.LR,steps_per_epoch=self.steps_per_epoch,epochs=self.EPOCHS,pct_start=0.1)
-        self.criterion = torch.nn.BCEWithLogitsLoss()
+        self.criterion = DiceLoss()

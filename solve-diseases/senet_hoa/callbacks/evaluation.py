@@ -32,18 +32,33 @@ class ModelValidationCallback:
         # Initializing storage for overall truths and predictions
         ground_truth = []
         predictions = []
-        
-        
+        categories = []
+        all_scores=[]
+        idx=0
         for images,coors,shape,mask_gt in tqdm(self.valid_loader):
             with torch.no_grad():
                 prediction = self.model(images.to(self.device)).detach().cpu()
                 prediction = torch.sigmoid(LargeImageInferenceCollator.combine_masks_into_image(shape,coors,prediction))
-            ground_truth.append(mask_gt.squeeze(0).numpy())
-            predictions.append(prediction.squeeze(0).squeeze(1).numpy())
-        all_scores = [compute_2d_dice(x>0,y>self.threshold) for x,y in zip(ground_truth,predictions)] 
-        all_scores = [x for x in all_scores if not np.isnan(x)]
-        score = np.mean(all_scores) if len(all_scores)>0 else 0
+            x= mask_gt.squeeze(0).numpy()
+            y = prediction.squeeze(0).squeeze(1).numpy()
+            all_scores.append(compute_2d_dice(x>0,y>self.threshold))
+
+
+            f,dim,_ = self.valid_loader.dataset.slices[idx]
+            fname = os.path.split(self.valid_loader.dataset.files[f][0])[-1].split(".")[0]
+            categories.append(f"{fname}_{dim}")
+            idx+=1
+        # all_scores = [compute_2d_dice(x>0,y>self.threshold) for x,y in zip(ground_truth,predictions)] 
+        total_scores = [x for x in all_scores if not np.isnan(x)]
+        score = np.mean(total_scores) if len(total_scores)>0 else 0
         self.metrics(current_step, f"surfacedice", score)
+
+        for val in np.unique(categories):
+            subset_scores = [x for i,x in enumerate(all_scores) if categories[i]==val]
+            subset_scores = [x for x in subset_scores if not np.isnan(x)]
+            subset_scores = np.mean(subset_scores) if len(subset_scores)>0 else 0
+            self.metrics(current_step, f"surfacedice_{val}", subset_scores)
+
         if score>=self.score:
             print(f"saving best model.surfacedice improved from {self.score} to {score}")
             self._savemodel(current_step,os.path.join(self.output_dir,"bestmodel_opa.pkl"))

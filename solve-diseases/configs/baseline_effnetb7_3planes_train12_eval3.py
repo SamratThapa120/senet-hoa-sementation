@@ -12,16 +12,11 @@ class Configs(Base):
     OUTPUTDIR=f"../workdir/{__name__}"
 
     TRAIN_DATA_PATHS=[
-        ('/app/segment/dataset/train_3d/images/kidney_1_dense.npy','/app/segment/dataset/train_3d/masks/kidney_1_dense.npy',[1, 2]),
-        ('/app/segment/dataset/train_3d/images/kidney_1_voi.npy','/app/segment/dataset/train_3d/masks/kidney_1_voi.npy',[1, 2]),
-        ('/app/segment/dataset/train_3d/images/kidney_2.npy','/app/segment/dataset/train_3d/masks/kidney_2.npy',[1, 2]),
-        ('/app/segment/dataset/train_3d/images/kidney_3_dense.npy','/app/segment/dataset/train_3d/masks/kidney_3_dense.npy',[1, 2]),
-        ('/app/segment/dataset/train_3d/images/kidney_3_sparse.npy','/app/segment/dataset/train_3d/masks/kidney_3_sparse.npy',[1, 2])
+        ('/app/segment/dataset/train_3d/images/kidney_1_dense.npy','/app/segment/dataset/train_3d/masks/kidney_1_dense.npy',[0,1,2]),
+        ('/app/segment/dataset/train_3d/images/kidney_1_voi.npy','/app/segment/dataset/train_3d/masks/kidney_1_voi.npy',[0,1,2]),
+        ('/app/segment/dataset/train_3d/images/kidney_2.npy','/app/segment/dataset/train_3d/masks/kidney_2.npy',[0,1,2]),
     ]
     VALID_DATA_PATHS=[
-        ('/app/segment/dataset/train_3d/images/kidney_1_dense.npy','/app/segment/dataset/train_3d/masks/kidney_1_dense.npy',[0]),
-        ('/app/segment/dataset/train_3d/images/kidney_1_voi.npy','/app/segment/dataset/train_3d/masks/kidney_1_voi.npy',[0]),
-        ('/app/segment/dataset/train_3d/images/kidney_2.npy','/app/segment/dataset/train_3d/masks/kidney_2.npy',[0]),
         ('/app/segment/dataset/train_3d/images/kidney_3_dense.npy','/app/segment/dataset/train_3d/masks/kidney_3_dense.npy',[0]),
         ('/app/segment/dataset/train_3d/images/kidney_3_sparse.npy','/app/segment/dataset/train_3d/masks/kidney_3_sparse.npy',[0])
     ]
@@ -38,13 +33,13 @@ class Configs(Base):
     NUM_WORKERS_VAL=6
     DISTRIBUTED=True
 
-    LR=0.0005
+    LR=0.0001
 
     EPOCHS=50
     MIN_CONFIGS=2
 
     GRADIENT_STEPS=1
-    VALIDATION_FREQUENCY=1  # Number of epochs
+    VALIDATION_FREQUENCY=2  # Number of epochs
 
     CLIP_NORM=1e-2
 

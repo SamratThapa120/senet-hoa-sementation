@@ -30,6 +30,7 @@ class Slices3DDataset(Dataset):
         """
         self.three_d = [] 
         self.slices = []
+        self.files = files
         for idx,(fname_image,fname_mask,dims) in enumerate(files):
             # masks = []
             # images = []
